@@ -1,0 +1,35 @@
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'This project was created by SKC for Community Mfg. on 2/16/2018
+'This project will get a static named file from the FTP site place it in Global Files Directory then rename the file on move to the Pending upload folder.
+V.Local.bConnected.Declare(boolean,False)
+v.Local.iCount.Declare(Long,0)
+v.Local..BulkDeclareString(sFiles, sUpper,sError)
+F.Intrinsic.Control.Try
+	F.Intrinsic.Task.LaunchSync("\\CMSGSSDB\apps\Global\PLUGINS\GAB\GAS\GETFile.bat")
+	F.Intrinsic.File.Exists("\\CMSGSSDB\apps\Global\Files\CMS_EDI.txt", v.Local.bConnected)
+	F.Intrinsic.Control.If(v.Local.bConnected, =, True)
+		F.Intrinsic.UI.Sleep(10)
+		F.Intrinsic.File.GetFileList("\\CMSGSSDB\apps\Global\Files\EDI\Pending\", v.Local.sFiles)
+		F.Intrinsic.String.Split(v.Local.sFiles, ":", v.Local.sFiles)
+		F.Intrinsic.String.Split(v.Local.sFiles(v.Local.sFiles.UBound), "_", v.Local.sUpper)
+		v.Local.sUpper.RedimPreserve(0,2)
+		F.Intrinsic.Control.If(v.Local.sUpper.Trim, = ,"")
+			F.Intrinsic.File.CopyFile("\\CMSGSSDB\apps\Global\Files\CMS_EDI.txt", "\\CMSGSSDB\apps\Global\Files\EDI\Pending\CMS_EDI_1.txt")
+		F.Intrinsic.Control.Else
+			F.Intrinsic.String.Split(v.Local.sUpper(2), ".",v.Local.sUpper)
+			F.Intrinsic.Math.Add(v.Local.sUpper.Long, 1, v.Local.icount)
+			F.Intrinsic.String.Build("\\CMSGSSDB\apps\Global\Files\EDI\Pending\CMS_EDI_{0}.txt", v.Local.iCount, v.Local.sFiles)
+			F.Intrinsic.File.CopyFile("\\CMSGSSDB\apps\Global\Files\CMS_EDI.txt", v.Local.sFiles)
+			F.Intrinsic.File.DeleteFile("\\CMSGSSDB\apps\Global\Files\CMS_EDI.txt")
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.End
+Function.Intrinsic.Control.Catch
+	Function.Intrinsic.String.Concat("Project: GCG_4964_GetFTP.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	Function.Intrinsic.Control.End
+Function.Intrinsic.Control.EndTry
+Program.Sub.Main.End
